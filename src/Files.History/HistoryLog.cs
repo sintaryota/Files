@@ -92,6 +92,8 @@ namespace Files.History
 				foreach (var (k, v) in imports)
 					lastImported[k] = v;
 			}
+
+			Changed?.Invoke(this, EventArgs.Empty);
 		}
 
 		private void Trim()
