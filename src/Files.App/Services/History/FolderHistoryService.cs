@@ -16,6 +16,7 @@ namespace Files.App.Services
 		private readonly List<Action> pending = [];
 		private readonly HistoryStore store;
 		private readonly FolderHistoryRecorder recorder;
+		private readonly List<IDisposable> sources = [];
 		private bool initialized;
 
 		public HistoryLog Log { get; } = new();
@@ -50,6 +51,26 @@ namespace Files.App.Services
 
 			foreach (var action in queued)
 				Run(action);
+
+			StartExternalSources();
+		}
+
+		// Runs after the saved history is loaded so imports compare against the stored last-import times.
+		private void StartExternalSources()
+		{
+			try
+			{
+				var recent = new RecentItemsHistorySource(Log);
+				var word = new OfficeMruHistorySource(Log, "Word", HistorySource.WordMru);
+				sources.Add(recent);
+				sources.Add(word);
+				recent.Start();
+				word.Start();
+			}
+			catch (Exception ex)
+			{
+				App.Logger.LogWarning(ex, "Folder history could not start its external sources.");
+			}
 		}
 
 		public void RecordFileOpened(string filePath) => Enqueue(() => recorder.RecordFileUse(filePath));
