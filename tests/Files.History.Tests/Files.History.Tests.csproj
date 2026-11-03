@@ -4,10 +4,15 @@
     <PropertyGroup>
         <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
         <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>false</IsPackable>
         <OutputType>Exe</OutputType>
         <Configurations>Debug;Release</Configurations>
     </PropertyGroup>
+
+    <ItemGroup>
+        <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="MSTest.TestAdapter" />
