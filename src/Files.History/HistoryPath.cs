@@ -79,6 +79,15 @@ namespace Files.History
 		}
 
 		/// <summary>
+		/// Returns the folder that contains <paramref name="path"/>, or null for a root.
+		/// </summary>
+		public static string? GetParent(string path)
+		{
+			var (root, segments) = Split(path);
+			return segments.Length == 0 ? null : Join(root, segments[..^1]);
+		}
+
+		/// <summary>
 		/// True when <paramref name="descendant"/> lies strictly inside <paramref name="ancestor"/>. Both must be normalized.
 		/// </summary>
 		public static bool IsAncestor(string ancestor, string descendant)
