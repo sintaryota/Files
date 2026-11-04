@@ -190,7 +190,7 @@ namespace Files.App.ViewModels.UserControls
 				return true;
 
 			var root = System.IO.Path.GetPathRoot(path);
-			return !string.IsNullOrEmpty(root) && new DriveInfo(root).DriveType == DriveType.Network;
+			return !string.IsNullOrEmpty(root) && new DriveInfo(root).DriveType == System.IO.DriveType.Network;
 		}
 	}
 }
