@@ -44,7 +44,7 @@ namespace Files.App.Data.Items
 			set => SetProperty(ref hasUnrealizedChildren, value);
 		}
 
-		public bool IsLeafWithChildren => IsExpandableFolder;
+		public virtual bool IsLeafWithChildren => IsExpandableFolder;
 
 		private bool childrenLoaded;
 		private bool childrenLoading;

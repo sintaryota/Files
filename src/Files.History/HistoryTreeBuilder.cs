@@ -18,7 +18,7 @@ namespace Files.History
 		IReadOnlyList<HistoryNode> Children);
 
 	/// <summary>
-	/// Builds the compressed tree: only branch points and leaf folders are kept.
+	/// Builds the compressed tree: only branch points and leaf folders are kept. Each drive's top branch point is the root.
 	/// </summary>
 	public static class HistoryTreeBuilder
 	{
@@ -58,7 +58,9 @@ namespace Files.History
 			if (branch.LastUsed is not null)
 				return [ToLeaf(branch)];
 
-			return branch.Children.Values.SelectMany(ToParent);
+			// The branch point is the root, so folders that share it stay visibly under it. Its children are always shown.
+			var parents = branch.Children.Values.SelectMany(ToParent).ToList();
+			return [ToNode(branch, parents, byRecency: true)];
 		}
 
 		private static IEnumerable<HistoryNode> ToParent(TrieNode parent)
@@ -84,9 +86,11 @@ namespace Files.History
 		private static HistoryNode ToLeaf(TrieNode node)
 			=> new(node.Name, node.Path, true, node.LastUsed!.Value, []);
 
-		private static HistoryNode ToNode(TrieNode node, IEnumerable<HistoryNode> children)
+		private static HistoryNode ToNode(TrieNode node, IEnumerable<HistoryNode> children, bool byRecency = false)
 		{
-			var sorted = children.OrderBy(c => c.Name, HistoryPath.Comparer).ToList();
+			var sorted = (byRecency
+				? children.OrderByDescending(c => c.LastUsed).ThenBy(c => c.Name, HistoryPath.Comparer)
+				: children.OrderBy(c => c.Name, HistoryPath.Comparer)).ToList();
 			return new(node.Name, node.Path, false, sorted.Max(c => c.LastUsed), sorted);
 		}
 

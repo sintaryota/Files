@@ -67,6 +67,10 @@ namespace Files.App.Data.Items
 
 		public bool IsDefaultLocation { get; set; }
 
+		// History nodes list their own compressed children yet must act like tree folder rows (navigate on click, expand with the chevron) rather than group headers.
+		public override bool IsLeafWithChildren
+			=> base.IsLeafWithChildren || (Section == SectionType.History && ChildItems is { Count: > 0 });
+
 		public object? Children
 		{
 			get

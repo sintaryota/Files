@@ -130,3 +130,52 @@ namespace Files.History.Tests
 		}
 	}
 }
+		[TestMethod]
+		public void Report_ExplainsEachOutcome()
+		{
+			var events = new List<HistoryEvent>
+			{
+				Ev(@"C:\gone", 1),
+				Ev(@"C:\P\Q", 2), Ev(@"C:\P\Q", 3), Ev(@"C:\P\Q", 4),
+				Ev(@"C:\P", 5),
+				Ev(@"C:\x", 6), Ev(@"C:\y", 7), Ev(@"C:\z", 8), Ev(@"C:\w", 9)
+			};
+
+			var report = FolderSelector.SelectWithReport(events, p => p != @"C:\gone");
+			CandidateOutcome Outcome(string path) => report.Candidates.Single(c => c.Path == path).Outcome;
+
+			Assert.AreEqual(9, report.EventsConsidered);
+			Assert.AreEqual(CandidateOutcome.ReplacedByDescendant, Outcome(@"C:\P"));
+			Assert.AreEqual(CandidateOutcome.SelectedReplacingAncestors, Outcome(@"C:\P\Q"));
+			Assert.AreEqual(CandidateOutcome.SkippedMissing, Outcome(@"C:\gone"));
+			Assert.AreEqual(CandidateOutcome.Selected, Outcome(@"C:\w"));
+			Assert.AreEqual(CandidateOrigin.Recent, report.Candidates.Single(c => c.Path == @"C:\w").Origin);
+		}
+
+		[TestMethod]
+		public void Report_MarksCandidatesPastTheLimitAsNotEvaluated()
+		{
+			var events = Enumerable.Range(0, 30).Select(i => Ev($@"C:\D\{i}", i)).ToList();
+
+			var report = FolderSelector.SelectWithReport(events, Always);
+
+			Assert.HasCount(HistoryDefaults.MaxDisplay, report.Selected);
+			Assert.AreEqual(15, report.Candidates.Count(c => c.Outcome == CandidateOutcome.NotEvaluated));
+		}
+
+		[TestMethod]
+		public void Diagnostics_MentionsReasonsAndTree()
+		{
+			var log = new HistoryLog();
+			log.Add(Ev(@"C:\P\Q", 1));
+			log.Add(Ev(@"C:\P", 2));
+			var report = FolderSelector.SelectWithReport(log.Snapshot(), Always);
+			var tree = HistoryTreeBuilder.Build(report.Selected);
+
+			var text = HistoryDiagnostics.Format(log, report, tree, Origin);
+
+			StringAssert.Contains(text, @"C:\P\Q");
+			StringAssert.Contains(text, "非表示");
+			StringAssert.Contains(text, "表示ツリー");
+		}
+

@@ -869,6 +869,12 @@ namespace Files.App.ViewModels.UserControls
 			if (item is not INavigationControlItem navigationControlItem) return;
 			var navigationPath = item as string;
 
+			if (IsHistoryDiagnosticsItem(navigationControlItem))
+			{
+				_ = ShowHistoryDiagnosticsAsync();
+				return;
+			}
+
 			if (await DriveHelpers.CheckEmptyDrive(navigationPath))
 				return;
 

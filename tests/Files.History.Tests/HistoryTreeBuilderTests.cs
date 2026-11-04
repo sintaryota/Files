@@ -16,7 +16,7 @@ namespace Files.History.Tests
 				Sel(@"C:\Users\me\Documents\水道\2026\決算", 2),
 				Sel(@"C:\Users\me\Documents\財務\資料", 1)]);
 
-			Assert.AreEqual("水道\n  2026\n    当初\n    決算\n財務\n  資料", Render(tree));
+			Assert.AreEqual("Documents\n  水道\n    2026\n      当初\n      決算\n  財務\n    資料", Render(tree));
 		}
 
 		[TestMethod]
@@ -27,7 +27,7 @@ namespace Files.History.Tests
 				Sel(@"C:\Users\me\Documents\水道\2026\決算", 2),
 				Sel(@"C:\Users\me\Documents\財務\資料", 1)]);
 
-			Assert.AreEqual("Desktop\n  作業\nDocuments\n  決算\n  資料", Render(tree));
+			Assert.AreEqual("me\n  Desktop\n    作業\n  Documents\n    決算\n    資料", Render(tree));
 		}
 
 		[TestMethod]
@@ -48,8 +48,8 @@ namespace Files.History.Tests
 				Sel(@"C:\A\y\2", 2),
 				Sel(@"D:\Z\only", 10)]);
 
-			// D: has no branching, so it is a lone leaf; top level is ordered by last use (D: 10, y 2, x 1).
-			Assert.AreEqual("only\ny\n  2\nx\n  1", Render(tree));
+			// D: has no branching, so it is a lone leaf; top level is ordered by last use (D: 10, A: 2).
+			Assert.AreEqual("only\nA\n  y\n    2\n  x\n    1", Render(tree));
 		}
 
 		[TestMethod]
@@ -60,7 +60,7 @@ namespace Files.History.Tests
 				Sel(@"C:\r\P\b\2", 2),
 				Sel(@"C:\r\Q\3", 3)]);
 
-			Assert.AreEqual("Q\n  3\nP\n  1\n  2", Render(tree));
+			Assert.AreEqual("r\n  Q\n    3\n  P\n    1\n    2", Render(tree));
 		}
 
 		[TestMethod]
@@ -70,7 +70,7 @@ namespace Files.History.Tests
 				Sel(@"C:\r\P", 1),
 				Sel(@"C:\r\Q\3", 2)]);
 
-			var p = tree.Single(n => n.Name == "P");
+			var p = tree.Single().Children.Single(n => n.Name == "P");
 			Assert.IsTrue(p.IsLeaf);
 			Assert.AreEqual(0, p.Children.Count);
 		}
@@ -82,10 +82,24 @@ namespace Files.History.Tests
 				Sel(@"C:\Users\me\Documents\水道\2026\予算\当初", 3),
 				Sel(@"C:\Users\me\Documents\水道\2026\決算", 2)]);
 
-			// B = 2026; its children 予算 and 決算 become the parents.
-			var yosan = tree.Single(n => n.Name == "予算");
+			// The branch point 2026 is the root; its children 予算 and 決算 are the parents.
+			var root = tree.Single();
+			Assert.AreEqual(@"C:\Users\me\Documents\水道\2026", root.FullPath);
+			var yosan = root.Children.Single(n => n.Name == "予算");
 			Assert.AreEqual(@"C:\Users\me\Documents\水道\2026\予算", yosan.FullPath);
 			Assert.AreEqual(@"C:\Users\me\Documents\水道\2026\予算\当初", yosan.Children.Single().FullPath);
+		}
+
+		[TestMethod]
+		public void SiblingsShareTheirCommonParentAsRoot()
+		{
+			var tree = HistoryTreeBuilder.Build([
+				Sel(@"D:\testprogram\gas", 2),
+				Sel(@"D:\testprogram\レコードから町を類推するマクロ\out", 1),
+				Sel(@"D:\testprogram\レコードから町を類推するマクロ\src", 3)]);
+
+			Assert.AreEqual("testprogram\n  レコードから町を類推するマクロ\n    out\n    src\n  gas", Render(tree));
+			Assert.AreEqual(@"D:\testprogram", tree.Single().FullPath);
 		}
 	}
 }
