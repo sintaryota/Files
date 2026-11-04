@@ -128,8 +128,7 @@ namespace Files.History.Tests
 
 			Assert.AreEqual(HistoryDefaults.MaxDisplay, calls);
 		}
-	}
-}
+
 		[TestMethod]
 		public void Report_ExplainsEachOutcome()
 		{
@@ -178,4 +177,5 @@ namespace Files.History.Tests
 			StringAssert.Contains(text, "非表示");
 			StringAssert.Contains(text, "表示ツリー");
 		}
-
+	}
+}
