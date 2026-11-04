@@ -92,5 +92,15 @@ namespace Files.History.Tests
 
 			Assert.AreEqual(@"C:\a\b", log.Snapshot().Single().Folder);
 		}
+
+		[TestMethod]
+		public void ExcludedPathsAreNotRecorded()
+		{
+			var log = new HistoryLog { Exclude = p => HistoryPath.IsAncestor(@"C:\App\LocalState", p) };
+
+			Assert.IsFalse(log.Add(At(@"C:\App\LocalState\report.txt", 0, HistorySource.RecentItems)));
+			Assert.IsTrue(log.Add(At(@"C:\Docs\a.txt", 1, HistorySource.RecentItems)));
+			Assert.HasCount(1, log.Snapshot());
+		}
 	}
 }

@@ -22,6 +22,7 @@ namespace Files.App.ViewModels.UserControls
 		private IFolderHistoryService? folderHistoryService;
 		private CancellationTokenSource? historyDebounce;
 		private string? historySignature;
+		private string? historyExpandedForPath;
 
 		private void InitializeHistorySection()
 		{
@@ -168,7 +169,7 @@ namespace Files.App.ViewModels.UserControls
 			}
 		}
 
-		// Opens the route down to the folder being shown. With closeOthers, everything off that route is closed too. A folder outside the tree leaves the state as it is.
+		// Opens the route down to the folder being shown. With closeOthers, everything off that route is closed too, but only when the folder changed: the sidebar re-checks the current folder after every expand, and redoing it then would close what the user just opened. A folder outside the tree leaves the state as it is.
 		private void ApplyHistoryExpansion(bool closeOthers = true)
 		{
 			var path = CurrentPath;
@@ -176,9 +177,15 @@ namespace Files.App.ViewModels.UserControls
 				GetSection(SectionType.History)?.ChildItems is not { } roots)
 				return;
 
+			if (closeOthers && string.Equals(path, historyExpandedForPath, StringComparison.OrdinalIgnoreCase))
+				return;
+
 			var route = FindHistoryRoute(roots, path);
 			if (route is null)
 				return;
+
+			if (closeOthers)
+				historyExpandedForPath = path;
 
 			var open = new HashSet<INavigationControlItem>(route.Take(route.Count - 1));
 			SetHistoryExpansion(roots, open, closeOthers);

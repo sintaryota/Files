@@ -27,6 +27,10 @@ namespace Files.App.Services
 				Path.Combine(ApplicationData.Current.LocalFolder.Path, FileName),
 				onError: ex => App.Logger.LogWarning(ex, "Folder history storage failed."));
 			recorder = new FolderHistoryRecorder(Log);
+
+			// Files' own data folder holds this history and the diagnostics report; opening them must not count as use.
+			var dataFolder = HistoryPath.Normalize(ApplicationData.Current.LocalFolder.Path);
+			Log.Exclude = path => HistoryPath.IsAncestor(dataFolder, path);
 			Log.Changed += (_, _) => { if (initialized) store.ScheduleSave(Log); };
 		}
 

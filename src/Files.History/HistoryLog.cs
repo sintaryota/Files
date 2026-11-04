@@ -20,6 +20,9 @@ namespace Files.History
 			dedupeWindow = TimeSpan.FromSeconds(dedupeSeconds);
 		}
 
+		/// <summary>Paths for which this returns true are never recorded, such as the app's own data folder.</summary>
+		public Func<string, bool>? Exclude { get; set; }
+
 		/// <summary>Raised after the event list or import times change.</summary>
 		public event EventHandler? Changed;
 
@@ -33,6 +36,9 @@ namespace Files.History
 				FilePath = HistoryPath.Normalize(e.FilePath),
 				Folder = HistoryPath.Normalize(e.Folder)
 			};
+
+			if (Exclude?.Invoke(normalized.FilePath) == true)
+				return false;
 
 			lock (gate)
 			{
@@ -85,7 +91,7 @@ namespace Files.History
 				{
 					FilePath = HistoryPath.Normalize(e.FilePath),
 					Folder = HistoryPath.Normalize(e.Folder)
-				}));
+				}).Where(e => Exclude?.Invoke(e.FilePath) != true));
 				Trim();
 
 				lastImported.Clear();

@@ -113,5 +113,19 @@ namespace Files.History.Tests
 			await store.LoadAsync(loaded);
 			Assert.HasCount(5, loaded.Snapshot());
 		}
+
+		[TestMethod]
+		public async Task Load_DropsExcludedPaths()
+		{
+			var source = new HistoryLog();
+			source.Add(new HistoryEvent(Origin, @"C:\App\LocalState\report.txt", @"C:\App\LocalState", HistorySource.RecentItems));
+			source.Add(new HistoryEvent(Origin.AddMinutes(1), @"C:\Docs\a.txt", @"C:\Docs", HistorySource.RecentItems));
+			await new HistoryStore(FilePath).SaveAsync(source);
+
+			var loaded = new HistoryLog { Exclude = p => HistoryPath.IsAncestor(@"C:\App\LocalState", p) };
+			await new HistoryStore(FilePath).LoadAsync(loaded);
+
+			Assert.AreEqual(@"C:\Docs\a.txt", loaded.Snapshot().Single().FilePath);
+		}
 	}
 }
