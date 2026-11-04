@@ -1,4 +1,4 @@
-// Copyright (c) Files Community
+// Copyright (c) koji inoguchi(nagasaki)
 // Licensed under the MIT License.
 
 namespace Files.History
