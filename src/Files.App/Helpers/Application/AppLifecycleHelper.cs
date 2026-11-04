@@ -116,7 +116,8 @@ namespace Files.App.Helpers
 					App.LibraryManager.UpdateLibrariesAsync(),
 					OptionalTaskAsync(WSLDistroManager.UpdateDrivesAsync(), generalSettingsService.ShowWslSection),
 					OptionalTaskAsync(App.FileTagsManager.UpdateFileTagsAsync(), generalSettingsService.ShowFileTagsSection),
-					jumpListService.InitializeAsync()
+					jumpListService.InitializeAsync(),
+					Ioc.Default.GetRequiredService<IFolderHistoryService>().InitializeAsync()
 				), App.Logger);
 
 				await SafetyExtensions.IgnoreExceptions(addItemService.InitializeAsync, App.Logger);
@@ -327,6 +328,7 @@ namespace Files.App.Helpers
 					.AddSingleton<IDateTimeFormatter, UserDateTimeFormatter>()
 					.AddSingleton<ISizeProvider, UserSizeProvider>()
 					.AddSingleton<IQuickAccessService, QuickAccessService>()
+					.AddSingleton<IFolderHistoryService, FolderHistoryService>()
 					.AddSingleton<IResourcesService, ResourcesService>()
 					.AddSingleton<IWindowsJumpListService, WindowsJumpListService>()
 					.AddSingleton<IStorageTrashBinService, StorageTrashBinService>()

@@ -1124,6 +1124,9 @@
   <data name="DateDeleted" xml:space="preserve">
     <value>削除した日時</value>
   </data>
+  <data name="SidebarHistory" xml:space="preserve">
+    <value>履歴</value>
+  </data>
   <data name="SidebarCloudDrives" xml:space="preserve">
     <value>クラウド ドライブ</value>
   </data>

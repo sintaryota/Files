@@ -482,6 +482,13 @@ namespace Files.App.Helpers
 				selectedItems.All(x => x.PrimaryItemAttribute == StorageItemTypes.File && !x.IsExecutable && !x.IsShortcut))
 			{
 				opened = await Win32Helper.InvokeWin32ComponentAsync(string.Join('|', selectedItems.Select(x => x.ItemPath)), associatedInstance);
+
+				if (opened)
+				{
+					var history = Ioc.Default.GetRequiredService<IFolderHistoryService>();
+					foreach (var item in selectedItems)
+						history.RecordFileOpened(item.GetRequiredPath());
+				}
 			}
 
 			if (opened)
@@ -618,6 +625,10 @@ namespace Files.App.Helpers
 						args += "/s";
 
 					opened = await OpenFile(path, associatedInstance, shortcutInfo, openViaApplicationPicker, args);
+
+					if (opened)
+						Ioc.Default.GetRequiredService<IFolderHistoryService>().RecordFileOpened(path);
+
 					break;
 			}
 
