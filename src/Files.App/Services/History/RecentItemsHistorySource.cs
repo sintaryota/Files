@@ -11,7 +11,7 @@ namespace Files.App.Services
 	/// <summary>
 	/// Imports file use from the Windows "Recent" folder (.lnk files).
 	/// </summary>
-	internal sealed class RecentItemsHistorySource : IDisposable
+	internal sealed partial class RecentItemsHistorySource : IDisposable
 	{
 		private const int MaxLinksPerImport = 300;
 		private static readonly TimeSpan DebounceInterval = TimeSpan.FromSeconds(1);

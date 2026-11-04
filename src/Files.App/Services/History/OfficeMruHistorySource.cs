@@ -10,7 +10,7 @@ namespace Files.App.Services
 	/// <summary>
 	/// Imports file use from an Office application's "File MRU" registry lists. Pass another app name and source to support Excel and others.
 	/// </summary>
-	internal sealed class OfficeMruHistorySource(HistoryLog log, string appName, HistorySource source, int pollSeconds = HistoryDefaults.WordPollSeconds) : IDisposable
+	internal sealed partial class OfficeMruHistorySource(HistoryLog log, string appName, HistorySource source, int pollSeconds = HistoryDefaults.WordPollSeconds) : IDisposable
 	{
 		private readonly CancellationTokenSource cts = new();
 
