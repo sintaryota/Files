@@ -15,6 +15,17 @@ namespace FolderHistory
 
 		public bool TopMost { get; set; } = true;
 
+		/// <summary>Folders pinned to the top of the tree, in the order they were added.</summary>
+		public List<string> PinnedFolders { get; set; } = [];
+
+		/// <summary>Navigate an Explorer window that is already open instead of starting a new one.</summary>
+		public bool ReuseExplorer { get; set; } = true;
+
+		/// <summary>Hide the window at the left screen edge and show it when the pointer touches the edge.</summary>
+		public bool EdgeMode { get; set; }
+
+		public int EdgeWidth { get; set; } = 340;
+
 		/// <summary>True once the first-run auto start choice was made, so later changes by the user are kept.</summary>
 		public bool AutoStartConfigured { get; set; }
 

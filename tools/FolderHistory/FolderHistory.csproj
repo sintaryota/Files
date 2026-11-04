@@ -6,6 +6,7 @@
         <TargetFramework>$(TargetFrameworkVersion)-windows</TargetFramework>
         <UseWindowsForms>true</UseWindowsForms>
         <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <ImplicitUsings>enable</ImplicitUsings>
         <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
         <AssemblyName>FolderHistory</AssemblyName>
