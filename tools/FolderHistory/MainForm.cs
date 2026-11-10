@@ -16,6 +16,9 @@ namespace FolderHistory
 		private const int EdgeShowTicks = 2;
 		private const int EdgeHideTicks = 6;
 
+		// Folders directly under the user profile are shown as parents, so the profile itself is not listed.
+		private static readonly string[] BaseFolders = [Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)];
+
 		private readonly EventWaitHandle activateSignal;
 		private readonly bool startHidden;
 		private readonly AppSettings settings = AppSettings.Load();
@@ -38,6 +41,8 @@ namespace FolderHistory
 		private RecentItemsSource? recentSource;
 		private OfficeMruSource? wordSource;
 		private string? signature;
+		private IReadOnlyList<HistoryNode> currentNodes = [];
+		private bool firstTree = true;
 		private bool visibleDecided;
 		private bool initStarted;
 		private bool building;
@@ -76,6 +81,7 @@ namespace FolderHistory
 			rebuildTimer.Tick += OnRebuildTick;
 			edgeTimer.Tick += OnEdgeTick;
 			edgeTimer.Start();
+			Activated += OnFormActivated;
 		}
 
 		// A hidden start (auto start) shows only the tray icon; the window appears when asked for.
@@ -441,15 +447,23 @@ namespace FolderHistory
 					var (nodes, newSignature, folderCount) = await Task.Run(() =>
 					{
 						var selected = FolderSelector.Select(events, FolderCheck.Exists);
-						var built = HistoryTreeBuilder.Build(selected);
+						var built = HistoryTreeBuilder.Build(selected, BaseFolders);
 						return (built, string.Join('|', pins) + "#" + GetSignature(built), selected.Count);
 					});
+
+					currentNodes = nodes;
 
 					// Rebuilding resets the rows, so leave them alone when nothing changed.
 					if (newSignature != signature)
 					{
 						signature = newSignature;
 						ApplyTree(pins, nodes);
+
+						if (firstTree)
+						{
+							firstTree = false;
+							ApplyActiveRoute();
+						}
 					}
 
 					statusLabel.Text = $"{folderCount} フォルダ / 履歴 {events.Count} 件 / {DateTime.Now:HH:mm:ss}";
@@ -461,6 +475,132 @@ namespace FolderHistory
 				rebuilding = false;
 			}
 		}
+
+	#region Active route
+
+		private void OnFormActivated(object? sender, EventArgs e)
+		{
+			// Coming back from a dialog or a menu must not undo what the user just opened.
+			if (modalDepth > 0 || menuOpen)
+				return;
+
+			ApplyActiveRoute();
+		}
+
+		// Opens only the route to the folder used most recently and the route to the folder Explorer shows; every other parent is folded.
+		private void ApplyActiveRoute()
+		{
+			var open = new HashSet<string>(HistoryPath.Comparer);
+
+			if (FindNewestRoute(currentNodes) is { } newest)
+			{
+				foreach (var node in newest)
+					open.Add(node.FullPath);
+			}
+
+			if (ExplorerNavigator.GetCurrentFolder() is { } folder)
+				AddRouteToPath(currentNodes, folder, open);
+
+			building = true;
+			tree.BeginUpdate();
+			try
+			{
+				foreach (TreeNode root in tree.Nodes)
+					ApplyRoute(root, open);
+			}
+			finally
+			{
+				tree.EndUpdate();
+				building = false;
+			}
+		}
+
+		private void ApplyRoute(TreeNode node, HashSet<string> open)
+		{
+			if (node.Tag is not string tag)
+				return;
+
+			// Pinned folders have no children to fold.
+			if (tag == PinGroupTag)
+			{
+				collapsed.Remove(tag);
+				node.Expand();
+				return;
+			}
+
+			if (open.Contains(tag))
+			{
+				collapsed.Remove(tag);
+				node.Expand();
+			}
+			else
+			{
+				collapsed.Add(tag);
+				node.Collapse();
+			}
+
+			foreach (TreeNode child in node.Nodes)
+				ApplyRoute(child, open);
+		}
+
+		// The nodes from the top down to the folder with the latest use.
+		private static List<HistoryNode>? FindNewestRoute(IEnumerable<HistoryNode> nodes)
+		{
+			List<HistoryNode>? best = null;
+
+			foreach (var node in nodes)
+			{
+				List<HistoryNode>? route;
+				if (node.Children.Count == 0)
+				{
+					route = [node];
+				}
+				else if (FindNewestRoute(node.Children) is { } inner)
+				{
+					inner.Insert(0, node);
+					route = inner;
+				}
+				else
+				{
+					continue;
+				}
+
+				if (best is null || route[^1].LastUsed > best[^1].LastUsed)
+					best = route;
+			}
+
+			return best;
+		}
+
+		private static void AddRouteToPath(IEnumerable<HistoryNode> nodes, string path, HashSet<string> open)
+		{
+			string normalized;
+			try
+			{
+				normalized = HistoryPath.Normalize(path);
+			}
+			catch (ArgumentException)
+			{
+				return;
+			}
+
+			AddRoute(nodes, normalized, open);
+
+			static void AddRoute(IEnumerable<HistoryNode> nodes, string target, HashSet<string> open)
+			{
+				foreach (var node in nodes)
+				{
+					if (!HistoryPath.Comparer.Equals(node.FullPath, target) && !HistoryPath.IsAncestor(node.FullPath, target))
+						continue;
+
+					open.Add(node.FullPath);
+					AddRoute(node.Children, target, open);
+					return;
+				}
+			}
+		}
+
+		#endregion
 
 		private static string GetSignature(IEnumerable<HistoryNode> nodes)
 			=> string.Join('|', nodes.Select(n => $"{n.FullPath}\u0001{n.Name}\u0001{(n.IsLeaf ? 1 : 0)}[{GetSignature(n.Children)}]"));
@@ -775,7 +915,7 @@ namespace FolderHistory
 				var text = await Task.Run(() =>
 				{
 					var report = FolderSelector.SelectWithReport(log.Snapshot(), FolderCheck.Exists);
-					var built = HistoryTreeBuilder.Build(report.Selected);
+					var built = HistoryTreeBuilder.Build(report.Selected, BaseFolders);
 					return HistoryDiagnostics.Format(log, report, built, DateTimeOffset.UtcNow);
 				});
 

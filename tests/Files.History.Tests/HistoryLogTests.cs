@@ -51,16 +51,16 @@ namespace Files.History.Tests
 		}
 
 		[TestMethod]
-		public void T14_101stEventDiscardsTheOldest()
+		public void T14_EventBeyondTheLimitDiscardsTheOldest()
 		{
 			var log = new HistoryLog();
-			for (var i = 0; i < 101; i++)
+			for (var i = 0; i < HistoryDefaults.HistorySize + 1; i++)
 				log.Add(At($@"C:\a\{i}.txt", i * 100, HistorySource.Files));
 
 			var events = log.Snapshot();
-			Assert.HasCount(100, events);
+			Assert.HasCount(HistoryDefaults.HistorySize, events);
 			Assert.IsFalse(events.Any(e => e.FilePath == @"C:\a\0.txt"));
-			Assert.IsTrue(events.Any(e => e.FilePath == @"C:\a\100.txt"));
+			Assert.IsTrue(events.Any(e => e.FilePath == $@"C:\a\{HistoryDefaults.HistorySize}.txt"));
 		}
 
 		[TestMethod]

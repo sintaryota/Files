@@ -9,7 +9,7 @@ namespace Files.History
 	public static class HistoryDefaults
 	{
 		/// <summary>Number of usage events kept.</summary>
-		public const int HistorySize = 100;
+		public const int HistorySize = 200;
 
 		/// <summary>Number of most recently used folders that are always candidates.</summary>
 		public const int RecentRequired = 5;
@@ -18,7 +18,7 @@ namespace Files.History
 		public const int FrequentTop = 10;
 
 		/// <summary>Maximum number of leaf folders displayed.</summary>
-		public const int MaxDisplay = 15;
+		public const int MaxDisplay = 30;
 
 		/// <summary>Window in seconds in which the same file from different sources counts once.</summary>
 		public const int DedupeSeconds = 30;

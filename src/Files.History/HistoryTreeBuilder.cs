@@ -18,22 +18,30 @@ namespace Files.History
 		IReadOnlyList<HistoryNode> Children);
 
 	/// <summary>
-	/// Builds the compressed tree: only branch points and leaf folders are kept. Each drive's top branch point is the root.
+	/// Builds the compressed tree: only branch points and leaf folders are kept. The folders directly under the drive (or a base folder such as the user profile) are the parents.
 	/// </summary>
 	public static class HistoryTreeBuilder
 	{
-		public static IReadOnlyList<HistoryNode> Build(IEnumerable<SelectedFolder> folders)
+		/// <param name="folders">The folders to show.</param>
+		/// <param name="baseFolders">
+		/// Folders whose direct children become the top level, such as the user profile.
+		/// A folder outside all of them is placed under its drive (or share) root instead.
+		/// </param>
+		public static IReadOnlyList<HistoryNode> Build(IEnumerable<SelectedFolder> folders, IEnumerable<string>? baseFolders = null)
 		{
+			var bases = (baseFolders ?? []).Select(HistoryPath.Normalize).ToList();
 			var result = new List<HistoryNode>();
 
-			foreach (var group in folders.GroupBy(f => HistoryPath.Split(f.Path).Root, HistoryPath.Comparer))
+			foreach (var group in folders.GroupBy(f => FindBase(f.Path, bases), HistoryPath.Comparer))
 			{
-				var root = new TrieNode(group.Key, group.Key);
+				var (_, baseSegments) = HistoryPath.Split(group.Key);
+				var root = new TrieNode(baseSegments.Length > 0 ? baseSegments[^1] : group.Key, group.Key);
+
 				foreach (var folder in group)
 				{
 					var (_, segments) = HistoryPath.Split(folder.Path);
 					var node = root;
-					foreach (var segment in segments)
+					foreach (var segment in segments.Skip(baseSegments.Length))
 						node = node.GetOrAddChild(segment);
 
 					node.LastUsed = node.LastUsed is { } old && old > folder.LastUsed ? old : folder.LastUsed;
@@ -48,19 +56,26 @@ namespace Files.History
 				.ToList();
 		}
 
+		// The nearest base folder above (or equal to) the path, else the drive root.
+		private static string FindBase(string path, List<string> bases)
+		{
+			var best = bases
+				.Where(b => HistoryPath.Comparer.Equals(b, path) || HistoryPath.IsAncestor(b, path))
+				.OrderByDescending(b => b.Length)
+				.FirstOrDefault();
+
+			return best ?? HistoryPath.Split(path).Root;
+		}
+
+		// The folders directly under the base are the parents. They are always shown; below them only branch points and leaves remain.
 		private static IEnumerable<HistoryNode> BuildGroup(TrieNode root)
 		{
-			var branch = root;
-			while (branch.LastUsed is null && branch.Children.Count == 1)
-				branch = branch.Children.Values.First();
+			var parents = new List<HistoryNode>();
+			if (root.LastUsed is not null)
+				parents.Add(ToLeaf(root));
 
-			// No branching: show the single leaf only.
-			if (branch.LastUsed is not null)
-				return [ToLeaf(branch)];
-
-			// The branch point is the root, so folders that share it stay visibly under it. Its children are always shown.
-			var parents = branch.Children.Values.SelectMany(ToParent).ToList();
-			return [ToNode(branch, parents, byRecency: true)];
+			parents.AddRange(root.Children.Values.SelectMany(ToParent));
+			return parents;
 		}
 
 		private static IEnumerable<HistoryNode> ToParent(TrieNode parent)

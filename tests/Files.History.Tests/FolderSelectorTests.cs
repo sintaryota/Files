@@ -27,12 +27,12 @@ namespace Files.History.Tests
 		[TestMethod]
 		public void T5_AncestorReturnsWhenDescendantLeavesHistory()
 		{
-			// ア is the oldest of 101 events, so it falls out of the newest 100.
+			// ア is the oldest event past the limit, so it falls out of the newest ones.
 			var events = new List<HistoryEvent> { Ev(@"C:\A\1\ア", 0), Ev(@"C:\A\1", 1), Ev(@"C:\A\1", 2), Ev(@"C:\A\1", 3) };
-			for (var i = 0; i < 97; i++)
+			for (var i = 0; i < HistoryDefaults.HistorySize - 3; i++)
 				events.Add(Ev($@"C:\Z\{i}", 10 + i));
 
-			Assert.AreEqual(101, events.Count);
+			Assert.AreEqual(HistoryDefaults.HistorySize + 1, events.Count);
 
 			var result = Paths(FolderSelector.Select(events, Always));
 			CollectionAssert.Contains(result, @"C:\A\1");
@@ -62,9 +62,9 @@ namespace Files.History.Tests
 
 			Assert.IsLessThanOrEqualTo(HistoryDefaults.HistorySize, events.Count);
 
-			var result = Paths(FolderSelector.Select(events, Always));
+			var result = Paths(FolderSelector.Select(events, Always, maxDisplay: 15));
 
-			Assert.HasCount(HistoryDefaults.MaxDisplay, result);
+			Assert.HasCount(15, result);
 			CollectionAssert.Contains(result, @"C:\F\11");
 			CollectionAssert.Contains(result, @"C:\F\12");
 		}
@@ -81,17 +81,17 @@ namespace Files.History.Tests
 				events.Add(Ev($@"C:\O\{i}", t++));
 			events.Add(Ev(@"C:\P", t++));
 
-			var result = Paths(FolderSelector.Select(events, Always));
+			var result = Paths(FolderSelector.Select(events, Always, maxDisplay: 15));
 
 			CollectionAssert.Contains(result, @"C:\P\Q");
 			CollectionAssert.DoesNotContain(result, @"C:\P");
-			Assert.HasCount(HistoryDefaults.MaxDisplay, result);
+			Assert.HasCount(15, result);
 		}
 
 		[TestMethod]
 		public void T11_MissingFolderIsSkippedAndRefilled()
 		{
-			var events = Enumerable.Range(0, 30).Select(i => Ev($@"C:\D\{i}", i)).ToList();
+			var events = Enumerable.Range(0, 40).Select(i => Ev($@"C:\D\{i}", i)).ToList();
 
 			var result = Paths(FolderSelector.Select(events, p => !p.EndsWith(@"\29")));
 
@@ -154,7 +154,7 @@ namespace Files.History.Tests
 		[TestMethod]
 		public void Report_MarksCandidatesPastTheLimitAsNotEvaluated()
 		{
-			var events = Enumerable.Range(0, 30).Select(i => Ev($@"C:\D\{i}", i)).ToList();
+			var events = Enumerable.Range(0, 45).Select(i => Ev($@"C:\D\{i}", i)).ToList();
 
 			var report = FolderSelector.SelectWithReport(events, Always);
 

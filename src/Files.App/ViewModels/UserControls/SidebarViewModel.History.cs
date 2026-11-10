@@ -15,6 +15,9 @@ namespace Files.App.ViewModels.UserControls
 		private const bool HistoryDiagnosticsEnabled = true;
 		private const string HistoryDiagnosticsPath = "history:diagnostics";
 
+		// Folders directly under the user profile are shown as parents, so the profile itself is not listed.
+		private static readonly string[] HistoryBaseFolders = [Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)];
+
 		private static readonly TimeSpan HistoryRebuildDebounce = TimeSpan.FromSeconds(1);
 		private static readonly TimeSpan NetworkExistsTimeout = TimeSpan.FromMilliseconds(500);
 
@@ -64,7 +67,7 @@ namespace Files.App.ViewModels.UserControls
 				return;
 
 			var selected = FolderSelector.Select(folderHistoryService.Log.Snapshot(), HistoryFolderExists);
-			var tree = HistoryTreeBuilder.Build(selected);
+			var tree = HistoryTreeBuilder.Build(selected, HistoryBaseFolders);
 			var signature = GetTreeSignature(tree);
 			var iconBytes = await LocationItem.GetGenericSmallFolderIconBytesAsync();
 
@@ -278,7 +281,7 @@ namespace Files.App.ViewModels.UserControls
 				var text = await Task.Run(() =>
 				{
 					var report = FolderSelector.SelectWithReport(log.Snapshot(), HistoryFolderExists);
-					var tree = HistoryTreeBuilder.Build(report.Selected);
+					var tree = HistoryTreeBuilder.Build(report.Selected, HistoryBaseFolders);
 					return HistoryDiagnostics.Format(log, report, tree, DateTimeOffset.UtcNow);
 				});
 

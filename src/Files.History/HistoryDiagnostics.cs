@@ -37,7 +37,7 @@ namespace Files.History
 			}
 
 			sb.AppendLine();
-			sb.AppendLine("=== 表示ツリー（分岐点を根として表示） ===");
+			sb.AppendLine("=== 表示ツリー（ドライブ、またはユーザーフォルダの直下のフォルダが親） ===");
 			if (tree.Count == 0)
 				sb.AppendLine("(なし)");
 			else

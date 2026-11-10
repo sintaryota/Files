@@ -9,7 +9,7 @@ This is an **unofficial** fork of [Files](https://github.com/files-community/Fil
 Adds a **History** section to the sidebar, below Pinned. It shows the folders you use most recently and most often as a compressed tree:
 
 - File use is recorded from Files (open, move, copy, rename), from the Windows "Recent" folder and from the Word recent file list.
-- Each drive's top branch point is the root; folders between branch points are left out.
+- The folders directly under a drive (or under the user profile) are the parents; folders between branch points are left out.
 - A temporary diagnostics row explains why a folder is, or is not, listed.
 
 New code lives in `src/Files.History` (UI independent, with tests in `tests/Files.History.Tests`), `src/Files.App/Services/History` and `src/Files.App/ViewModels/UserControls/SidebarViewModel.History.cs`. Small hooks were added to existing files; see the Git history of the `feature/folder-history` branch for the exact changes.
