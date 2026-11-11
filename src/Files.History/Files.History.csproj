@@ -1,0 +1,14 @@
+<!--  Copyright (c) koji inoguchi(nagasaki). Licensed under the MIT License.  -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsTrimmable>true</IsTrimmable>
+        <IsAotCompatible>true</IsAotCompatible>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <Configurations>Debug;Release</Configurations>
+    </PropertyGroup>
+
+</Project>

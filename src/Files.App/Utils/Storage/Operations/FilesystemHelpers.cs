@@ -351,6 +351,8 @@ namespace Files.App.Utils.Storage
 				App.HistoryWrapper.AddHistory(history);
 			}
 
+			RecordDestinationFiles(history);
+
 			await Task.Yield();
 
 			var itemsCount = banner.TotalItemsCount;
@@ -501,6 +503,8 @@ namespace Files.App.Utils.Storage
 				App.HistoryWrapper.AddHistory(history);
 			}
 
+			RecordDestinationFiles(history);
+
 			// Execute removal tasks concurrently in background
 			var sourcePaths = source.Select(x => x.Path);
 			_ = Task.WhenAll(sourcePaths.Select(jumpListService.RemoveFolderAsync));
@@ -557,6 +561,19 @@ namespace Files.App.Utils.Storage
 			return returnStatus;
 		}
 
+		// Files that moved or copied into a folder count as use of that folder. Undo/redo run through StorageHistoryOperations and never reach here.
+		private static void RecordDestinationFiles(IStorageHistory? history)
+		{
+			if (history?.Destination is not { } destinations)
+				return;
+
+			Ioc.Default.GetRequiredService<IFolderHistoryService>().RecordFilesInto(
+				destinations
+					.Where(item => item.ItemType == FilesystemItemType.File && !string.IsNullOrWhiteSpace(item.Path))
+					.Select(item => item.Path)
+					.ToList());
+		}
+
 		public Task<ReturnResult> RenameAsync(IStorageItem source, string newName, NameCollisionOption collision, bool registerHistory, bool showExtensionDialog = true)
 			=> RenameAsync(source.FromStorageItem()
 				?? throw new InvalidOperationException("The storage item could not be converted for renaming."), newName, collision, registerHistory, showExtensionDialog);
@@ -608,6 +625,13 @@ namespace Files.App.Utils.Storage
 				default:
 					history = await filesystemOperations.RenameAsync(source, newName, collision, progress, cancellationToken);
 					break;
+			}
+
+			if (history?.Destination is { Count: > 0 } renamed &&
+				source.ItemType == FilesystemItemType.File &&
+				!string.IsNullOrWhiteSpace(renamed[0].Path))
+			{
+				Ioc.Default.GetRequiredService<IFolderHistoryService>().RecordFileRenamed(renamed[0].Path);
 			}
 
 			if (registerHistory && !string.IsNullOrWhiteSpace(source.Path))

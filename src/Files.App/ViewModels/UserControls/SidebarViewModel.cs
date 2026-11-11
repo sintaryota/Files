@@ -90,6 +90,7 @@ namespace Files.App.ViewModels.UserControls
 			[
 				SectionType.Home,
 				SectionType.Pinned,
+				SectionType.History,
 				SectionType.Library,
 				SectionType.Drives,
 				SectionType.CloudDrives,
@@ -122,6 +123,8 @@ namespace Files.App.ViewModels.UserControls
 
 			if (string.IsNullOrEmpty(value))
 				return;
+
+			ApplyHistoryExpansion();
 
 			INavigationControlItem? item = value switch
 			{
@@ -327,6 +330,7 @@ namespace Files.App.ViewModels.UserControls
 			Manager_DataChanged(SectionType.Network, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 			Manager_DataChanged(SectionType.WSL, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 			Manager_DataChanged(SectionType.FileTag, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+			InitializeHistorySection();
 
 			App.QuickAccessManager.Model.DataChanged += Manager_DataChanged;
 			App.LibraryManager.DataChanged += Manager_DataChanged;
@@ -632,6 +636,12 @@ namespace Files.App.ViewModels.UserControls
 					section.IsHeader = true;
 					break;
 
+				case SectionType.History:
+					section = BuildSection(Strings.SidebarHistory.GetLocalizedResource(), sectionType, new ContextMenuOptions(), false);
+					section.IsHeader = true;
+					section.IsExpanded = true;
+					break;
+
 				case SectionType.FileTag:
 					if (!ShowFileTagsSection)
 						break;
@@ -858,6 +868,12 @@ namespace Files.App.ViewModels.UserControls
 		{
 			if (item is not INavigationControlItem navigationControlItem) return;
 			var navigationPath = item as string;
+
+			if (IsHistoryDiagnosticsItem(navigationControlItem))
+			{
+				_ = ShowHistoryDiagnosticsAsync();
+				return;
+			}
 
 			if (await DriveHelpers.CheckEmptyDrive(navigationPath))
 				return;

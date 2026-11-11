@@ -1,0 +1,21 @@
+<!--  Copyright (c) koji inoguchi(nagasaki). Licensed under the MIT License.  -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>$(TargetFrameworkVersion)-windows</TargetFramework>
+        <UseWindowsForms>true</UseWindowsForms>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+        <AssemblyName>FolderHistory</AssemblyName>
+        <RootNamespace>FolderHistory</RootNamespace>
+        <Configurations>Debug;Release</Configurations>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Files.History\Files.History.csproj" />
+    </ItemGroup>
+
+</Project>
