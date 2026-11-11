@@ -76,6 +76,16 @@ dotnet publish tools/FolderHistory -c Release -r win-x64 --self-contained false 
 winget install Microsoft.DotNet.DesktopRuntime.10
 ```
 
+## ワンコマンドでインストール
+
+テスト、ビルド、このユーザーへのインストール、スタートメニューのショートカット作成、起動までを、まとめて行います（管理者権限は要りません）。
+
+```
+powershell -ExecutionPolicy Bypass -File tools\FolderHistory\deploy.ps1
+```
+
+`-SkipTests` でテストを省き、`-NoStart` で起動しません。exe は `%LOCALAPPDATA%\Programs\FolderHistory` に作られます。
+
 ## ライセンス
 
 MIT License。Copyright (c) koji inoguchi(nagasaki)。リポジトリのルートの `LICENSE-MIT` と `FORK_NOTICE.md` を参照してください。
